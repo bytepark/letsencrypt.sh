@@ -16,23 +16,8 @@ DOMAIN="${2}"
 STRIPPED_DOMAIN=`echo $DOMAIN | sed -e "s/www\.//"`
 
 
-asd="
-    {
-        "authToken": "$API_KEY",
-        "zoneConfig": {
-            "name": "$STRIPPED_DOMAIN"
-        },
-        "recordsToAdd": [
-            {
-                "name": "${2}",
-                "type": "TXT",
-                "content": "${4}",
-                "ttl": 300
-            }
-        ]
-    }
-    "
-    echo $asd
+
+
 
 # function get_content {
 #     curl 
@@ -42,24 +27,24 @@ asd="
 done="no"
 
 if [[ "$1" = "deploy_challenge" ]]; then
-    asd='
-    {
-        "authToken": "$API_KEY",
-        "zoneConfig": {
-            "name": "${2}"
-        },
-        "recordsToAdd": [
-            {
-                "name": "byte-park.org",
-                "type": "TXT",
-                "content": "${4}",
-                "ttl": 300
-            }
-        ]
-    }
-    ' 
- 
+     cat <<EOT > file.json
+     {
+         "authToken": "$API_KEY",
+         "zoneConfig": {
+             "name": "$STRIPPED_DOMAIN"
+         },
+         "recordsToAdd": [
+             {
+                 "name": "${2}",
+                 "type": "TXT",
+                 "content": "${4}",
+                 "ttl": 300
+             }
+         ]
+     }
+EOT
 
+    curl -H "Content-Type: application/json" -X POST -d @file.json https://partner.http.net/api/dns/v1/json/zoneUpdate
     #printf "update add _acme-challenge.%s. 300 in TXT \"%s\"\n\n" "${2}" "${4}" > asd
     #$NSUPDATE "${updatefile}"
     done="yes"
