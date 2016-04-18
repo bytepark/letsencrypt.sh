@@ -9,25 +9,21 @@ set -u
 set -o pipefail
 umask 077
 
-API_URL='https://partner.http.net/api/domain/v1/json/zoneUpdate'
 source ./private
 
 DOMAIN="${2}"
 STRIPPED_DOMAIN=`echo $DOMAIN | sed -e "s/www\.//"`
 
-
-
-
+updatefile="$(mktemp)"
 
 # function get_content {
 #     curl 
 # }
 
-#NSUPDATE="nsupdate -k /path/to/Kdnsupdatekey.private"
 done="no"
 
 if [[ "$1" = "deploy_challenge" ]]; then
-     cat <<EOT > file.json
+     cat <<EOT > ${updatefile}
      {
          "authToken": "$API_KEY",
          "zoneConfig": {
@@ -44,7 +40,7 @@ if [[ "$1" = "deploy_challenge" ]]; then
      }
 EOT
 
-    curl -H "Content-Type: application/json" -X POST -d @file.json https://partner.http.net/api/dns/v1/json/zoneUpdate
+    curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate
     #printf "update add _acme-challenge.%s. 300 in TXT \"%s\"\n\n" "${2}" "${4}" > asd
     #$NSUPDATE "${updatefile}"
     done="yes"
@@ -61,7 +57,7 @@ if [[ "${1}" = "deploy_cert" ]]; then
     done="yes"
 fi
 
-#rm -f "${updatefile}"
+rm -f "${updatefile}"
 
 if [[ ! "${done}" = "yes" ]]; then
     echo Unkown hook "${1}"
