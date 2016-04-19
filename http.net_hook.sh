@@ -12,10 +12,6 @@ STRIPPED_DOMAIN=`echo $DOMAIN | awk -F. '{if ($(NF-1) == "co") printf $(NF-2)"."
 
 updatefile="$(mktemp)"
 
-# function get_content {
-#     curl 
-# }
-
 done="no"
 
 if [[ "$1" = "deploy_challenge" ]]; then
@@ -27,24 +23,43 @@ cat <<EOT > ${updatefile}
          },
          "recordsToAdd": [
              {
-                 "name": "${2}",
+                 "name": "_acme-challenge.${2}",
                  "type": "TXT",
-                 "content": "_acme-challenge${4}",
+                 "content": "${4}",
                  "ttl": 300
              }
          ]
      }
 EOT
-
+    # debug
+    #cat ${updatefile}
+    # production
     curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate
-    #printf "update add _acme-challenge.%s. 300 in TXT \"%s\"\n\n" "${2}" "${4}" > asd
-    #$NSUPDATE "${updatefile}"
+
     done="yes"
 fi
 
 if [[ "$1" = "clean_challenge" ]]; then
-    printf "update delete _acme-challenge.%s. 300 in TXT \"%s\"\n\n" "${2}" "${4}" > "${updatefile}"
-    $NSUPDATE "${updatefile}"
+cat <<EOT > ${updatefile}
+     {
+         "authToken": "$API_KEY",
+         "zoneConfig": {
+             "name": "$STRIPPED_DOMAIN"
+         },
+         "recordsToDelete": [
+             {
+                 "name": "_acme-challenge.${2}",
+                 "type": "TXT",
+                 "content": "${4}",
+             }
+         ]
+     }
+EOT
+    # debug
+    #cat ${updatefile}
+    # production
+    curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate
+
     done="yes"
 fi
 
