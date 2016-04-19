@@ -34,7 +34,7 @@ EOT
     # debug
     #cat ${updatefile}
     # production
-    curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate
+    curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate &> /dev/null
 
     done="yes"
 fi
@@ -58,13 +58,13 @@ EOT
     # debug
     #cat ${updatefile}
     # production
-    curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate
+    curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate &> /dev/null
 
     done="yes"
 fi
 
 if [[ "${1}" = "deploy_cert" ]]; then
-    # do nothing for now
+    service nginx reload
     done="yes"
 fi
 
