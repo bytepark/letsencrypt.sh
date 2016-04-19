@@ -68,7 +68,7 @@ if [[ "${1}" = "deploy_cert" ]]; then
     done="yes"
 fi
 
-#rm -f "${updatefile}"
+rm -f "${updatefile}"
 
 if [[ ! "${done}" = "yes" ]]; then
     echo Unkown hook "${1}"
