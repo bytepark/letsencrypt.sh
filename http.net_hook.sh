@@ -12,7 +12,7 @@ umask 077
 source ./private
 
 DOMAIN="${2}"
-STRIPPED_DOMAIN=`echo $DOMAIN | sed -e "s/www\.//"`
+STRIPPED_DOMAIN=`echo $DOMAIN | awk -F. '{if ($(NF-1) == "co") printf $(NF-2)"."; printf $(NF-1)"."$(NF)"\n";}' `
 
 updatefile="$(mktemp)"
 
@@ -23,7 +23,7 @@ updatefile="$(mktemp)"
 done="no"
 
 if [[ "$1" = "deploy_challenge" ]]; then
-     cat <<EOT > ${updatefile}
+cat <<EOT > ${updatefile}
      {
          "authToken": "$API_KEY",
          "zoneConfig": {
@@ -33,7 +33,7 @@ if [[ "$1" = "deploy_challenge" ]]; then
              {
                  "name": "${2}",
                  "type": "TXT",
-                 "content": "${4}",
+                 "content": "_acme-challenge${4}",
                  "ttl": 300
              }
          ]
@@ -57,7 +57,7 @@ if [[ "${1}" = "deploy_cert" ]]; then
     done="yes"
 fi
 
-rm -f "${updatefile}"
+#rm -f "${updatefile}"
 
 if [[ ! "${done}" = "yes" ]]; then
     echo Unkown hook "${1}"
