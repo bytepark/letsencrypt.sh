@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-#
-# Example how to deploy a DNS challenge using nsupdate
-#
-
 set -e
 set -u
 set -o pipefail
