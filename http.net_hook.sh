@@ -8,56 +8,18 @@ umask 077
 source ./private
 
 DOMAIN="${2}"
+CHALLENGE_TOKEN="${3}"
 TOKEN="${4}"
 STRIPPED_DOMAIN=`echo $DOMAIN | awk -F. '{if ($(NF-1) == "co") printf $(NF-2)"."; printf $(NF-1)"."$(NF)"\n";}' `
-#OLD_TOKEN=`dig +trace +short -t TXT _acme-challenge.${2} | grep -Eo '["].*["]' | sed -e 's/"//g' `
 updatefile="$(mktemp)"
-
-strip_domain() {
-    COUNT=`echo "$1" |  grep -o "\." | wc -l`
-    #awk -F. '{if ($(NF-1) == "co") printf $(NF-2)"."; printf $(NF-2)"\n";}'
-}
-
-done="no"
-
-if [[ "$1" = "deploy_challenge" ]]; then
-    echo "ddd"
 OLD_TOKEN=$(dig +trace +short -t TXT _acme-challenge.${2} |
              grep -Po '".*?"' |
              sed -e 's/"//g' )
-            
-echo "$OLD_TOKEN"
-echo "asd"
-    # if there is already a certificate/dns entry, update the entry
-    if [[ "$OLD_TOKEN" ]]; then
-        echo "debug:token exists"
-cat <<EOT > ${updatefile}
-     {
-         "authToken": "$API_KEY",
-         "zoneConfig": {
-             "name": "$STRIPPED_DOMAIN"
-         },
-         "recordsToAdd": [
-             {
-                 "name": "_acme-challenge.${2}",
-                 "type": "TXT",
-                 "content": "${4}",
-                 "ttl": 300
-             }
-         ],
-         "recordsToDelete": [
-             {
-                 "name": "_acme-challenge.das.byte-park.org",
-                 "type": "TXT",
-                 "content": "$OLD_TOKEN"
-             }
-         ]
-     }
-EOT
-cat "${updatefile}"
+done="no"
 
-    else
-        echo "debug: token empty"
+if [[ "$1" = "deploy_challenge" ]]; then
+    printf "deploy_challenge called DOMAIN=$DOMAIN CHALLENGE_TOKEN=$CHALLENGE_TOKEN TOKEN_VALUE_DNS=$TOKEN"
+
 cat <<EOT > ${updatefile}
      {
          "authToken": "$API_KEY",
@@ -74,16 +36,23 @@ cat <<EOT > ${updatefile}
          ]
      }
 EOT
-cat "${updatefile}"
-    fi
 
-    echo "debug:curl"
-    curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate #&> /dev/null
+    curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate &> /dev/null
+
+    # waiting for deploy of the token, so that verify works
+    while ! dig +trace +short -t TXT _acme-challenge.$DOMAIN | grep -- "$TOKEN" > /dev/null
+        do
+           printf "."
+           sleep 3
+        done
 
     done="yes"
 fi
 
 if [[ "$1" = "clean_challenge" ]]; then
+
+    printf "clean_challenge called with DOMAIN=$DOMAIN CHALLENGE_TOKEN=$CHALLENGE_TOKEN TOKEN_VALUE_DNS=$TOKEN"
+
 cat <<EOT > ${updatefile}
      {
          "authToken": "$API_KEY",
@@ -94,14 +63,13 @@ cat <<EOT > ${updatefile}
                  {
                      "name": "_acme-challenge.${2}",
                      "type": "TXT",
-                     "content": "${4}"
+                     "content": "\"${4}\""
                  }
          ]
 }
 EOT
 
     curl -H "Content-Type: application/json" -X POST -d @"${updatefile}" https://partner.http.net/api/dns/v1/json/zoneUpdate &> /dev/null
-    echo "doing clean"
     done="yes"
 fi
 
