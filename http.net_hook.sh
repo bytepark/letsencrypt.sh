@@ -75,6 +75,7 @@ fi
 
 if [[ "${1}" = "deploy_cert" ]]; then
     service nginx reload
+    service apache2 reload
     done="yes"
 fi
 
