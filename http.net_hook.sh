@@ -5,7 +5,8 @@
 #set -o pipefail
 umask 077
 
-source ./private
+BASE="$(dirname "$0")"
+. "$BASE/private"
 
 DOMAIN="${2}"
 CHALLENGE_TOKEN="${3}"
